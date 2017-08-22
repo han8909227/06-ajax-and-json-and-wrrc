@@ -43,33 +43,69 @@ Article.loadAll = function(rawData) {
   })
 }
 
+
 // This function will retrieve the data from either a local or remote source,
 // and process it, then hand off control to the View.
 Article.fetchAll = function() {
   if (localStorage.rawData) {
-    // When rawData is already in localStorage,
-    // we can load it with the .loadAll function above,
-    // and then render the index page (using the proper method on the articleView object).
-    let placeHolder = JSON.parse(localStorage.getItem('rawData'));
-    Article.loadAll(placeHolder); //TODO: What do we pass in to loadAll()?
-    //TODO: What method do we call to render the index page?
-    articleView.initIndexPage();
+    const pageEtag = localStorage.getItem('etag');
+    $.ajax({
+      url:'../data/hackerIpsum.json',
+      method:'HEAD',
+      success:
+      function(data, message, xhr) {
+        let myRe = /.*etag:\s(.*)\r/;
+        let header = xhr.getAllResponseHeaders();
+        const etag = myRe.exec(header)[0];
+        if(pageEtag !== etag){
+          $.getJSON('../data/hackerIpsum.json',
+            function(data){
+              Article.loadAll(data);
+              articleView.initIndexPage();
+              localStorage.setItem('rawData',JSON.stringify(data))
+            }
+          );
+        } else{
+          // When rawData is already in localStorage,
+          // we can load it with the .loadAll function above,
+          // and then render the index page (using the proper method on the articleView object).
+          let placeHolder = JSON.parse(localStorage.getItem('rawData'));
+          Article.loadAll(placeHolder); //TODO: What do we pass in to loadAll()?
+          //TODO: What method do we call to render the index page?
+          articleView.initIndexPage();
+
+        }
+        localStorage.setItem('etag',etag);
+      }
+    });
+
+
+
   } else {
-    // $.getJSON('../data/hackerIpsum.json',
-    //   function(data){
-    //     localStorage.setItem('rawData',JSON.stringify(data))
-    //     Article.loadAll(data);
-    //     articleView.initIndexPage();
-    //   }
-    // )
+    $.getJSON('../data/hackerIpsum.json',
+      function(data){
+        Article.loadAll(data);
+        articleView.initIndexPage();
+        localStorage.setItem('rawData',JSON.stringify(data))
+      }
+    );
 
-
-
-
+  //strech goal
+    $.ajax({
+      url:'../data/hackerIpsum.json',
+      method:'HEAD',
+      success:
+      function(data, message, xhr) {
+        let myRe = /.*etag:\s(.*)\r/;
+        let header = xhr.getAllResponseHeaders();
+        const etag = myRe.exec(header)[0];
+        localStorage.setItem('etag',etag);
+      }
+    });
     // TODO: When we don't already have the rawData,
     // we need to retrieve the JSON file from the server with AJAX (which jQuery method is best for this?),
     // cache it in localStorage so we can skip the server call next time,
     // then load all the data into Article.all with the .loadAll function above,
     // and then render the index page.
   }
-}
+};
