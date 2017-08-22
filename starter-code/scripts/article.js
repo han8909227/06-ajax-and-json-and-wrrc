@@ -82,6 +82,11 @@ Article.fetchAll = function() {
 
 
   } else {
+    // TODO: When we don't already have the rawData,
+    // we need to retrieve the JSON file from the server with AJAX (which jQuery method is best for this?),
+    // cache it in localStorage so we can skip the server call next time,
+    // then load all the data into Article.all with the .loadAll function above,
+    // and then render the index page.
     $.getJSON('../data/hackerIpsum.json',
       function(data){
         Article.loadAll(data);
@@ -102,10 +107,5 @@ Article.fetchAll = function() {
         localStorage.setItem('etag',etag);
       }
     });
-    // TODO: When we don't already have the rawData,
-    // we need to retrieve the JSON file from the server with AJAX (which jQuery method is best for this?),
-    // cache it in localStorage so we can skip the server call next time,
-    // then load all the data into Article.all with the .loadAll function above,
-    // and then render the index page.
   }
 };
